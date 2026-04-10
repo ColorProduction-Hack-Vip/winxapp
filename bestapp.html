@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#02060f">
+    <title>WinX Pro - Ultra AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* ==========================================
+           1. BASE CSS & CORE VARIABLES
+        =========================================== */
+        :root { --primary: #00E5FF; --orange: #FFB300; --red: #FF3366; --green: #10B981; --bg-dark: rgba(10, 15, 25, 0.95); --panel-bg: rgba(15, 23, 42, 0.98); }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: 'Inter', sans-serif; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        ::selection { background: transparent; }
+
+        /* ==========================================
+           2. SPLASH & LOADING SCREEN
+        =========================================== */
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999999; background: radial-gradient(circle at center, #0a1128 0%, #000000 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; transition: opacity 0.8s, transform 0.8s; }
+        .splash-grid { position: absolute; width: 200%; height: 200%; background-image: linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px); background-size: 30px 30px; animation: moveGrid 15s linear infinite; z-index: 0; pointer-events: none; }
+        @keyframes moveGrid { 0% { transform: translateY(0); } 100% { transform: translateY(-50px); } }
+
+        .splash-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+        .splash-logo-wrapper { position: relative; width: 130px; height: 130px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .splash-ring { position: absolute; border-radius: 50%; border: 3px solid transparent; width: 100%; height: 100%; border-top-color: var(--primary); border-bottom-color: var(--primary); animation: spinCircle 1.2s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+        .splash-ring-2 { width: 75%; height: 75%; border-left-color: var(--orange); border-right-color: var(--orange); border-top-color: transparent; border-bottom-color: transparent; animation: spinCircle 1.8s linear infinite reverse; }
+        .splash-img-logo { width: 55%; height: 55%; object-fit: contain; animation: pulseLogo 1.5s infinite alternate; filter: drop-shadow(0 0 25px rgba(0,229,255,0.8)); }
+        
+        .splash-title { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; letter-spacing: 4px; margin-bottom: 5px; text-shadow: 0 0 20px var(--primary); }
+        .splash-subtitle { font-family: 'Inter', sans-serif; font-size: 9px; color: var(--green); letter-spacing: 5px; font-weight: 800; margin-bottom: 30px; text-transform: uppercase; }
+        
+        .loading-container { width: 220px; display: flex; flex-direction: column; gap: 8px; }
+        .loading-stats { display: flex; justify-content: space-between; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 800; color: #94A3B8; }
+        .loading-stats span:last-child { color: var(--primary); text-shadow: 0 0 10px var(--primary); font-size: 11px; }
+        .loading-bar-bg { width: 100%; height: 5px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; position: relative; border: 1px solid rgba(0,229,255,0.2); }
+        .loading-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, transparent, var(--primary), #fff); box-shadow: 0 0 20px var(--primary); transition: width 0.1s linear; }
+
+        #welcome-msg { font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--orange); font-weight: 900; letter-spacing: 2px; margin-top: 20px; text-align: center; display: none; text-shadow: 0 0 15px rgba(255,179,0,0.6); }
+
+        /* ==========================================
+           3. AUTH SCREEN & CONTACT
+        =========================================== */
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999999; background: #02060f; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; transition: opacity 0.5s; }
+        .auth-logo { font-size: 45px; color: var(--primary); text-shadow: 0 0 25px var(--primary); margin-bottom: 10px; font-family: 'Orbitron'; animation: pulseLogo 2s infinite alternate;}
+        .auth-title { font-size: 16px; font-weight: 900; letter-spacing: 3px; margin-bottom: 5px; font-family: 'Orbitron';}
+        .auth-sub { font-size: 9px; color: #64748B; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px;}
+        .pass-input { width: 200px; height: 45px; background: rgba(255,255,255,0.03); border: 1px solid rgba(0,229,255,0.3); border-radius: 10px; text-align: center; color: var(--primary); font-size: 18px; font-weight: 900; outline: none; transition: 0.3s; letter-spacing: 4px; margin-bottom: 20px; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);}
+        .pass-input:focus { border-color: #fff; box-shadow: 0 0 25px rgba(0,229,255,0.6); }
+        .auth-btn { background: linear-gradient(45deg, var(--primary), #0077ff); color: #fff; border: none; padding: 12px 40px; font-size: 12px; font-weight: 900; border-radius: 8px; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 229, 255, 0.4); margin-bottom: 25px; transition: 0.2s;}
+        .auth-btn:active { transform: scale(0.95); }
+        
+        .get-pin-text { font-size: 9px; color: #94A3B8; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; }
+        .auth-social-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .auth-social-btn { padding: 8px 15px; border-radius: 6px; font-size: 9px; font-weight: 800; text-decoration: none; color: #fff; border: 1px solid rgba(255,255,255,0.1); transition:0.2s;}
+        .auth-social-btn:active { transform: scale(0.95); }
+        .auth-social-btn.tele { background: rgba(0, 136, 204, 0.2); border-color: #0088cc; color: #00E5FF; }
+        .auth-social-btn.wa { background: rgba(37, 211, 102, 0.2); border-color: #25D366; color: #25D366; }
+        .copy-box { background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.3); padding: 8px 20px; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition:0.2s;}
+        .copy-box:active { background: rgba(0,229,255,0.1); }
+        .copy-user { font-size: 11px; font-weight: 900; color: var(--primary); font-family: 'Orbitron';}
+
+        /* Added for new password system */
+        #password-display-area { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 20px; }
+        #generated-password { font-size: 18px; font-weight: 900; color: var(--primary); font-family: 'Orbitron'; letter-spacing: 2px; }
+        #copy-password-btn { background: linear-gradient(45deg, var(--green), #00cc88); color: #000; border: none; padding: 10px 20px; font-size: 10px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);}
+        #copy-password-btn:active { transform: scale(0.95); }
+
+        /* 3.1 CUSTOM ERROR POPUP */
+        #custom-alert-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 999999999; display: none; justify-content: center; align-items: center; }
+        .custom-alert-box { background: linear-gradient(180deg, #1e0b10 0%, #02060f 100%); padding: 20px; border-radius: 12px; width: 80%; max-width: 280px; text-align: center; border: 1px solid var(--red); box-shadow: 0 0 40px rgba(255,51,102,0.3); color: #fff; font-family: 'Orbitron';}
+        .custom-alert-icon { font-size: 30px; margin-bottom: 10px; animation: softPulse 1s infinite; }
+        .custom-alert-title { color: var(--red); font-size: 14px; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
+        .custom-alert-msg { font-family: 'Inter'; font-size: 10px; color: #CBD5E1; margin-bottom: 20px; line-height: 1.5; }
+        .custom-alert-btn { background: rgba(255, 51, 102, 0.2); color: var(--red); border: 1px solid var(--red); padding: 10px 20px; font-weight: 900; border-radius: 6px; width: 100%; font-size: 11px; font-family: 'Orbitron'; cursor: pointer; transition: 0.2s;}
+        .custom-alert-btn:active { transform: scale(0.95); background: var(--red); color: #fff;}
+
+        /* New Password Instructions Modal */
+        #password-instruction-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 9999999; display: none; justify-content: center; align-items: center;
+        }
+        .instruction-box {
+            background: linear-gradient(180deg, #0f172a 0%, #02060f 100%); padding: 20px; border-radius: 12px; width: 80%; max-width: 320px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 40px rgba(0,229,255,0.3); color: #fff;
+        }
+        .instruction-box .title {
+            color: var(--primary); font-family: 'Orbitron'; font-weight: 900; margin-bottom: 10px; font-size: 14px;
+        }
+        .instruction-box .content {
+            font-family: 'Inter'; font-size: 10px; color: #CBD5E1; line-height: 1.6; text-align: left; margin-bottom: 15px;
+        }
+        .instruction-box .content ul {
+            padding-left: 15px; margin: 5px 0;
+        }
+        .instruction-box .content li {
+            margin-bottom: 5px;
+        }
+        .instruction-box .btn {
+            background: var(--green); color: #000; border: none; padding: 10px 20px; font-weight: 900; border-radius: 6px; width: 100%; font-size: 11px; margin-top: 15px; cursor: pointer; transition:0.2s;
+        }
+        .instruction-box .btn:active { transform: scale(0.95); }
+
+
+        /* 3.2 DISCLAIMER MODAL */
+        #disclaimer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 9999999; display: none; justify-content: center; align-items: center; }
+        .disc-box { background: linear-gradient(180deg, #0f172a 0%, #02060f 100%); padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 40px rgba(0,229,255,0.3); color: #fff;}
+        .disc-btn { background: var(--green); color: #000; border: none; padding: 10px 20px; font-weight: 900; border-radius: 6px; width: 100%; font-size: 11px; margin-top: 15px; cursor: pointer; transition:0.2s;}
+        .disc-btn:active { transform: scale(0.95); }
+
+        /* ==========================================
+           4. PLATFORM SERVER & HUD SCAN
+        =========================================== */
+        #target-server-box { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #000;}
+        .server-header-pro { position: absolute; top: 0; left: 0; width: 100%; height: 50px; background: linear-gradient(180deg, rgba(2,6,15,1) 0%, rgba(15,23,42,0.95) 100%); border-bottom: 1px solid rgba(0, 229, 255, 0.4); display: flex; justify-content: space-between; align-items: center; padding: 0 10px; box-sizing: border-box; z-index: 12;}
+        .platform-label { font-family: 'Orbitron'; font-size: 7px; color: var(--primary); letter-spacing: 2px; display: block; margin-bottom: 2px; text-shadow: 0 0 5px var(--primary);}
+        .select-box { background: rgba(0, 229, 255, 0.05); border: 1px solid var(--primary); border-radius: 4px; padding: 4px 6px; color: #fff; font-family: 'Orbitron'; font-size: 10px; font-weight: 700; outline: none; width: 130px; box-shadow: inset 0 0 10px rgba(0,229,255,0.2);}
+        .select-box option { background: #0f172a; color: #fff; }
+        
+        .live-hud { display: flex; flex-direction: column; align-items: flex-end; gap: 3px;}
+        .live-status { display: flex; align-items: center; gap: 4px; background: rgba(255, 51, 102, 0.15); padding: 3px 6px; border-radius: 20px; border: 1px solid rgba(255,51,102,0.4); }
+        .live-dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; animation: softPulse 1s infinite; }
+        .live-text { font-size: 7px; font-weight: 900; color: var(--red); letter-spacing: 1px;}
+        .server-ping { font-family: monospace; font-size: 7px; color: var(--green); font-weight: 600;}
+        #target-iframe { width: 100%; height: calc(100% - 50px); margin-top: 50px; border: none; filter: contrast(1.05); }
+
+        #scan-hud-overlay { position: fixed; top: 50px; left: 0; width: 100%; height: calc(100% - 50px); background: rgba(2, 6, 15, 0.7); z-index: 9999; display: none; justify-content: center; align-items: center; overflow: hidden; border: 2px solid rgba(0,229,255,0.1); box-sizing: border-box; }
+        .hud-circle-out { position: absolute; width: 220px; height: 220px; border: 1px dashed rgba(0,229,255,0.5); border-radius: 50%; animation: spinCircle 6s linear infinite; }
+        .hud-circle-in { position: absolute; width: 160px; height: 160px; border: 2px solid rgba(255,179,0,0.4); border-top-color: transparent; border-bottom-color: transparent; border-radius: 50%; animation: spinCircle 3s linear infinite reverse; }
+        .hud-target { position: absolute; width: 60px; height: 60px; border: 2px solid var(--primary); animation: pulseLogo 1s infinite alternate; }
+        .hud-target::after { content: '+'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--red); font-size: 20px; font-family: monospace; font-weight: bold; }
+        .radar-line { position: absolute; width: 100%; height: 2px; background: var(--primary); box-shadow: 0 0 40px 10px var(--primary); top: 0; animation: scanRadar 2s infinite ease-in-out; opacity: 0.8;}
+
+        @keyframes scanRadar { 0% { top: 0; } 50% { top: 98%; } 100% { top: 0; } }
+
+        /* ==========================================
+           5. MICRO FLOATING BUTTON & COMPACT WIDGET
+        =========================================== */
+        #ai-toggle-btn { 
+            position: fixed; top: 60%; right: 10px; width: 45px; height: 45px; 
+            background: rgba(10, 15, 25, 0.95); backdrop-filter: blur(10px); 
+            border-radius: 50%; display: none; justify-content: center; align-items: center; 
+            border: 2px solid var(--primary); padding: 2px; cursor: move;
+            animation: pulseGlow 2s infinite alternate;
+            z-index: 999999; box-sizing: border-box;
+            touch-action: none;
+        }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(0,229,255,0.4); } 100% { box-shadow: 0 0 20px rgba(0,229,255,0.8); } }
+        .floating-logo { width: 100%; height: 100%; border-radius: 50%; object-fit: contain; background: #000; pointer-events: none; }
+
+        #ai-scanner-widget { 
+            position: fixed; top: 20%; left: calc(50% - 90px); width: 180px; min-height: 200px;
+            border-radius: 10px; z-index: 1000000; display: none; 
+            background: linear-gradient(135deg, rgba(15,20,30,0.95) 0%, rgba(5,10,15,0.98) 100%);
+            border: 1px solid rgba(0,229,255,0.3); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 10px rgba(0,229,255,0.1); 
+            overflow: hidden; flex-direction: column;
+            touch-action: none;
+        }
+        
+        .ai-header { height: 26px; padding: 0 6px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(0,229,255,0.2); display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 8px; cursor: move; flex-shrink: 0;}
+        .header-icons { display: flex; gap: 6px; align-items: center; }
+        .icon-btn { font-size: 10px; cursor: pointer; color: #94A3B8; transition: 0.2s;}
+        .icon-btn:active { transform: scale(0.8); color: #fff;}
+        
+        .ai-body { padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; flex: 1;}
+        .compact-mode .ai-body { display: none; }
+
+        .server-acc { text-align: center; font-family: 'Orbitron'; font-size: 7px; color: var(--green); margin-bottom: 2px; flex-shrink: 0; text-shadow: 0 0 5px rgba(16,185,129,0.5);}
+        
+        /* SESSION TIMER BOX */
+        .session-timer { text-align: center; font-family: 'Orbitron'; font-size: 8px; font-weight: 800; color: var(--orange); background: rgba(255, 179, 0, 0.1); border: 1px dashed rgba(255, 179, 0, 0.4); border-radius: 4px; padding: 3px 0; margin-bottom: 2px; flex-shrink: 0; box-shadow: 0 0 5px rgba(255, 179, 0, 0.2); transition: 0.3s; }
+        .session-timer.expiring-soon { color: var(--red); background: rgba(255, 51, 102, 0.1); border-color: rgba(255, 51, 102, 0.4); animation: softPulse 1s infinite; }
+
+        .mini-trend-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; display: flex; overflow: hidden; flex-shrink: 0;}
+        .mt-b { height: 100%; background: var(--orange); transition: width 0.3s; }
+        .mt-s { height: 100%; background: var(--primary); transition: width 0.3s; }
+        .analytics-row { display: flex; justify-content: space-between; font-size: 8px; font-weight: 800; color: #94A3B8; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px; flex-shrink: 0;}
+        
+        .extracted-data { display: flex; gap: 3px; justify-content: center; height: 14px; margin: 2px 0; flex-shrink: 0;}
+        .history-dot { width: 10px; height: 10px; border-radius: 50%; font-size: 6px; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #000; animation: smoothPop 0.3s forwards;}
+        .dot-B { background: var(--orange); box-shadow: 0 0 5px var(--orange);} 
+        .dot-S { background: var(--primary); box-shadow: 0 0 5px var(--primary);}
+
+        .dynamic-area { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; position: relative;}
+        
+        #input-section { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .input-row { display: flex; gap: 4px; }
+        .btn-input { flex: 1; padding: 6px; background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; font-size: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);}
+        .btn-input:active { transform: scale(0.92); }
+        .action-btns { display: flex; flex-direction: row; gap: 4px; }
+        .btn-scan { flex: 2; background: linear-gradient(180deg, var(--primary) 0%, #0088cc 100%); border: none; padding: 7px; border-radius: 44px; color: #000; font-family: 'Orbitron'; font-weight: 900; font-size: 8px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 10px rgba(0,229,255,0.4), inset 0 1px 0 rgba(255,255,255,0.4);}
+        .btn-scan:active { transform: scale(0.95); }
+        .btn-scan.disabled { opacity: 0.5; pointer-events: none; box-shadow: none; background: rgba(255,255,255,0.1); color: #888;}
+        .btn-reset { flex: 1; background: rgba(255, 51, 102, 0.1); color: var(--red); border: 1px dashed rgba(255, 51, 102, 0.5); padding: 5px; border-radius: 4px; font-size: 7px; font-weight: 800; cursor: pointer; transition: 0.2s;}
+        .btn-reset:active { transform: scale(0.9); }
+
+        #tech-indicators { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; font-family: monospace; font-size: 7px; color: var(--primary); background: rgba(0,0,0,0.8); padding: 6px; border-radius: 6px; border: 1px solid rgba(0,229,255,0.3); display: none; line-height: 1.5; text-align: left; box-sizing: border-box; flex-direction: column; justify-content: flex-end; box-shadow: inset 0 0 15px rgba(0,229,255,0.1);}
+
+        #ai-result-box { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; gap: 6px; background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, rgba(0,0,0,0.8) 80%); border: 1px solid rgba(0,229,255,0.3); border-radius: 6px; padding: 6px; box-sizing: border-box; box-shadow: inset 0 0 15px rgba(0,229,255,0.1);}
+        
+        .pred-color { font-size: 26px; font-family: 'Orbitron'; font-weight: 900; margin: 0; line-height: 1;}
+        .pred-B { color: var(--orange); text-shadow: 0 0 20px rgba(255, 179, 0, 0.8); } 
+        .pred-S { color: var(--primary); text-shadow: 0 0 20px rgba(0, 229, 255, 0.8); }
+        
+        .prob-container { display: flex; align-items: center; gap: 4px; font-size: 6px; font-family: 'Orbitron'; width: 100%;}
+        .prob-bar-bg { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;}
+        .prob-b-fill { height: 100%; background: var(--orange); width: 0%; transition: 0.5s; box-shadow: 0 0 5px var(--orange);}
+        .prob-s-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.5s; box-shadow: 0 0 5px var(--primary);}
+        
+        .result-actions { display: flex; gap: 4px; width: 100%;}
+        .btn-action { flex: 1; padding: 6px; border: none; border-radius: 4px; font-size: 8px; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);}
+        .btn-action:active { transform: scale(0.9); }
+        .btn-win { background: linear-gradient(180deg, var(--green) 0%, #059669 100%); color: #000;} 
+        .btn-loss { background: linear-gradient(180deg, var(--red) 0%, #E11D48 100%); color: #fff;}
+
+        /* ==========================================
+           6. PANELS (DEV, SETTINGS, ANALYTICS)
+        =========================================== */
+        .side-panel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--panel-bg); backdrop-filter: blur(15px); z-index: 10; display: none; flex-direction: column; padding: 8px; box-sizing: border-box; font-size: 8px;}
+        .panel-header { display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 6px; font-size: 9px;}
+        
+        /* Analytics Sub-Panel CSS */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+        .stat-card { background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 4px; padding: 5px; text-align: center; }
+        .stat-card-title { font-size: 6px; color: #94A3B8; font-family: 'Orbitron'; margin-bottom:2px;}
+        .stat-card-val { font-size: 10px; font-weight: 900; color: var(--primary); }
+        
+        .martingale-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,179,0,0.3); border-radius: 4px; padding: 4px; }
+        .table-title { font-family: 'Orbitron'; font-size: 7px; color: var(--orange); text-align: center; margin-bottom: 4px; border-bottom: 1px dashed rgba(255,179,0,0.4); padding-bottom: 2px;}
+        .m-table { width: 100%; border-collapse: collapse; font-size: 7px; font-family: monospace; text-align: center; }
+        .m-table th { background: rgba(255,179,0,0.1); color: var(--orange); padding: 3px; border: 1px solid rgba(255,179,0,0.3); }
+        .m-table td { padding: 3px; border: 1px solid rgba(255,255,255,0.1); color: #fff; }
+        .m-table { background: rgba(255,255,255,0.02); }
+
+        .dev-content { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; padding: 5px 2px 20px 2px; scrollbar-width: thin; scrollbar-color: var(--primary) transparent; }
+        .dev-content::-webkit-scrollbar { width: 3px; } .dev-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        .dev-avatar-wrapper { position: relative; width: 45px; height: 45px; margin-bottom: 8px; flex-shrink: 0;}
+        .dev-avatar-ring { position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px; border-radius: 50%; background: conic-gradient(from 0deg, var(--primary), transparent, var(--orange), transparent); animation: spinCircle 3s linear infinite; }
+        .dev-avatar { position: relative; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-dark); object-fit: cover; z-index: 2; }
+        .dev-name { font-size: 11px; font-weight: 900; color: transparent; background: linear-gradient(90deg, var(--primary), #fff); -webkit-background-clip: text; font-family: 'Orbitron'; margin-bottom: 4px; flex-shrink: 0;}
+        .dev-badge { background: rgba(16, 185, 129, 0.15); color: var(--green); padding: 2px 6px; border-radius: 12px; font-size: 6px; font-weight: 800; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 8px; flex-shrink: 0;}
+        .dev-bio { font-size: 7px; color: #94A3B8; text-align: center; line-height: 1.4; margin-bottom: 10px; font-family: 'Inter'; flex-shrink: 0;}
+        .dev-socials { width: 100%; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;}
+        .contact-card { display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 5px; text-decoration: none; transition: 0.2s;}
+        .contact-card:active { transform: scale(0.95); }
+        .cc-icon { width: 20px; height: 20px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 10px; margin-right: 6px; flex-shrink: 0;}
+        .cc-tele .cc-icon { background: rgba(0, 136, 204, 0.2); color: #00E5FF; border: 1px solid #0088cc;}
+        .cc-wa .cc-icon { background: rgba(37, 211, 102, 0.2); color: #25D366; border: 1px solid #25D366;}
+        .cc-text { display: flex; flex-direction: column; }
+        .cc-title { color: #fff; font-size: 7px; font-weight: 800;}
+        .cc-sub { color: #64748B; font-size: 5px; margin-top: 2px;}
+
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: #CBD5E1; padding: 5px 0;}
+        .setting-row label { font-size: 10px; font-weight: 600; font-family: 'Inter'; }
+        .setting-input { width: 60px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,229,255,0.3); color: var(--primary); padding: 5px; text-align: center; font-size: 10px; border-radius: 6px; font-family: 'Orbitron'; outline: none;}
+        .setting-toggle { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .setting-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; -webkit-transition: .4s; transition: .4s; border-radius: 18px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; -webkit-transition: .4s; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--green); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--green); }
+        input:checked + .slider:before { -webkit-transform: translateX(16px); -ms-transform: translateX(16px); transform: translateX(16px); }
+
+        .btn-logout { background: rgba(255, 51, 102, 0.15); color: var(--red); border: 1px solid rgba(255,51,102,0.5); padding: 8px; width: 100%; margin-top: auto; border-radius: 4px; font-size: 10px; font-weight: 900; cursor: pointer; transition: 0.2s; font-family: 'Orbitron';}
+        .btn-logout:active { transform: scale(0.95); background: var(--red); color: #fff;}
+        
+        #fake-notifications { position: fixed; top: 60px; right: -200px; width: 120px; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); border-left: 3px solid var(--primary); color: #fff; padding: 5px; font-size: 7px; border-radius: 4px; z-index: 999999; transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
+
+        /* Animations */
+        @keyframes spinCircle { 100% { transform: rotate(360deg); } }
+        @keyframes pulseLogo { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 1; } }
+        @keyframes softPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes smoothPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false; };
+    </script>
+
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splash-screen">
+        <div class="splash-grid"></div>
+        <div class="splash-content">
+            <div class="splash-logo-wrapper">
+                <div class="splash-ring"></div>
+                <div class="splash-ring splash-ring-2"></div>
+                <img src="https://i.ibb.co.com/5P94D3P/Picsart-26-02-28-19-22-33-467.png" alt="Logo" class="splash-img-logo">
+            </div>
+            <div class="splash-title">WinX Predictor AI</div>
+            <div class="splash-subtitle">V5 Ultra Premium Edition</div>
+            
+            <div class="loading-container" id="loading-box">
+                <div class="loading-stats"><span id="splash-text">INITIALIZING ENGINE...</span><span id="splash-percent">0%</span></div>
+                <div class="loading-bar-bg"><div class="loading-bar-fill" id="splash-bar"></div></div>
+            </div>
+            <div id="welcome-msg">WELCOME TO WINX VIP</div>
+        </div>
+    </div>
+
+    <!-- 2. AUTH SCREEN -->
+    <div id="auth-screen">
+        <div class="auth-logo">❖</div>
+        <div class="auth-title">WinX SECURE LOGIN</div>
+        <div class="auth-sub">Enter VIP License Key</div>
+        <input type="text" id="pass-input" class="pass-input" placeholder="••••••••" autocomplete="off">
+        <button class="auth-btn" onclick="verifyPin()">AUTHENTICATE</button>
+
+        <div class="get-pin-text">Need License key? Generate here.</div>
+        <button class="auth-btn" onclick="openPasswordInstructionModal()">GET PASSWORD</button>
+        
+        <div id="password-display-area">
+            <span id="generated-password"></span>
+            <button id="copy-password-btn" onclick="copyGeneratedPassword()">COPY PASSWORD</button>
+        </div>
+
+        <div class="auth-social-row" style="margin-top:25px;">
+            <a href="https://t.me/+Gm-nPLSaYElkNzFl" target="_blank" class="auth-social-btn tele">✈️ Telegram</a>
+            <a href="https://wa.me/8801787720693" target="_blank" class="auth-social-btn wa">💬 WhatsApp</a>
+        </div>
+        <div class="copy-box" onclick="copyAdminUser()">
+            <span class="copy-user" id="admin-tele-user">@Leader10x</span>
+            <span style="font-size: 8px; color: #64748B; margin-top: 4px; text-transform: uppercase;">Click to Copy ID</span>
+        </div>
+    </div>
+
+    <!-- 3.1 CUSTOM ERROR POPUP -->
+    <div id="custom-alert-modal">
+        <div class="custom-alert-box">
+            <div class="custom-alert-icon">⚠️</div>
+            <div class="custom-alert-title" id="alert-title-text">ACCESS DENIED</div>
+            <div class="custom-alert-msg" id="alert-msg-text">Incorrect VIP License Key. Please try again.</div>
+            <button class="custom-alert-btn" onclick="closeAlert()">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- NEW PASSWORD INSTRUCTION MODAL -->
+    <div id="password-instruction-modal">
+        <div class="instruction-box">
+            <div class="title">পাসওয়ার্ড তৈরির নিয়মাবলী</div>
+            <div class="content">
+                <ul>
+                    <li>১. নিচের "শেয়ার করুন এবং ভিডিও দেখুন" বাটনে ক্লিক করুন।</li>
+                    <li>২. আপনার ডিভাইসে থাকা যেকোনো শেয়ার অপশন ব্যবহার করে YouTube ভিডিও লিংকটি শেয়ার করুন (যেমন: WhatsApp, Telegram, Facebook)।</li>
+                    <li>৩. শেয়ার করার পর স্বয়ংক্রিয়ভাবে YouTube অ্যাপে ভিডিওটি চালু হবে।</li>
+                    <li>৪. অনুগ্রহ করে ভিডিওটি কমপক্ষে ৩০ সেকেন্ড দেখুন।</li>
+                    <li>৫. ৩০ সেকেন্ড দেখার পর এই অ্যাপে ফিরে আসুন। আপনার পাসওয়ার্ড স্বয়ংক্রিয়ভাবে তৈরি হয়ে যাবে।</li>
+                    <li>৬. মনে রাখবেন, পাসওয়ার্ড প্রতি ১২ ঘণ্টায় একবার পরিবর্তন হয়।</li>
+                </ul>
+                <p style="text-align:center; color:var(--orange); font-weight:800;">এই পদক্ষেপগুলি অনুসরণ না করলে পাসওয়ার্ড তৈরি হবে না।</p>
+            </div>
+            <button class="btn" onclick="proceedToShareAndWatch()">শেয়ার করুন এবং ভিডিও দেখুন</button>
+        </div>
+    </div>
+
+    <!-- 3.2 DISCLAIMER MODAL -->
+    <div id="disclaimer-modal">
+        <div class="disc-box">
+            <div class="disc-title" style="color:var(--primary); font-family:'Orbitron'; font-weight:900; margin-bottom:10px;">⚠️ TRADING PROTOCOL</div>
+            <div class="disc-text" style="font-family:'Inter'; font-size:10px;">"আমি স্বীকার করছি যে আমি ইমোশন কন্ট্রোল রাখবো। টার্গেট প্রফিট পূর্ণ হলে বা স্টপ লস হিট করলে আজকের জন্য ট্রেড বন্ধ করে দেব। মানি ম্যানেজমেন্ট ছাড়া ট্রেড করবো না। তারপরেও যদি আমি ট্রেড করি এবং লস হয় তার জন্য আমি নিজেই দায়ী থাকবো। উল্লেখ্য এই সিস্টেম কোনভাবেই তার জন্য দায়ী থাকবে না।"</div>
+            <button class="disc-btn" onclick="acceptDisclaimer()">I AGREE & ENTER SYSTEM</button>
+        </div>
+    </div>
+
+    <!-- 4. PLATFORM SELECTION -->
+    <div id="target-server-box">
+        <div class="server-header-pro">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <span class="platform-label">TARGET PLATFORM</span>
+                <select class="select-box" id="server-selector" onchange="document.getElementById('target-iframe').src=this.value; playTone(600, 'sine', 0.1);">
+                    <option value="https://www.hgzy36.com/">🌐 HGNICE</option>
+                    <option value="https://dkwin9.com/">🌐 DK WIN</option>
+                    <option value="https://finix-win.com/#/register?invitationCode=633643106046">🌐 FINIXWIN</option>
+                    <option value="https://13mof91.com/#/">🌐 91 CLUB</option>
+                    <option value="https://6club.com/">🌐 6 CLUB</option>
+                    <option value="https://bdggamecom.com/">🌐 BDG GAME</option>
+                    <option value="https://bdgwingood.com/">🌐 BDG WIN</option>
+                    <option value="https://tgdream.pro/">🌐 TIRANGA GAME</option>
+                    <option value="https://goagames.link/">🌐 GOA GAMES</option>
+                    <option value="https://damanapp.download/">🌐 DAMAN GAME</option>
+                    <option value="https://www.gangaclub1.com/">🌐 GANGA CLUB</option>
+                    <option value="https://www.in979.com/">🌐 55 CLUB</option>
+                    <option value="https://www.lottery7ff.com/">🌐 LOTTERY 7</option>
+                    <option value="https://51clubb.net.in/">🌐 51 CLUB</option>
+                    <option value="https://kwgclub.com/">🌐 KWG CLUB</option>
+                    <option value="https://tpwinaa.com/">🌐 TP PLAY</option>
+                    <option value="https://in999ee.com/">🌐 IN999 GAME</option>
+                    <option value="https://2okwin6.com/">🌐 OK WIN</option>
+                    <option value="https://diuwin9.com/">🌐 DIU WIN</option>
+                    <option value="https://tashanwin.co/">🌐 TASHAN WIN</option>
+                    <option value="https://bigdaddygame2.com/">🌐 BIG DADDY</option>
+                    <option value="https://bigmumbai.win/">🌐 BIG MUMBAI</option>
+                    <option value="https://82winnn.com/#/">🌐 82 LOTTERY</option>
+                    <option value="https://fastwinss.com/">🌐 FAST WIN</option>
+                    <option value="https://bht-clb.com/">🌐 BHT CLUB</option>
+                    <option value="https://rajagames2.com/">🌐 RAJA GAME</option>
+                    <option value="https://pakgames.net/">🌐 PAK GAMES</option>
+                    <option value="https://www.92go44.com/">🌐 92 GO</option>
+                    <option value="https://www.92r9.com/">🌐 92 R</option>
+                    <option value="https://rxce.in/">🌐 RXCE GAME</option>
+                    <option value="https://www.92coco.fan/">🌐 92 COCO GAME</option>
+                    <option value="https://COMING/">🌐 COMING SOON</option>
+                </select>
+            </div>
+            <div class="live-hud">
+                <div class="live-status">
+                    <div class="live-dot"></div><span class="live-text">LIVE</span>
+                </div>
+                <div class="server-ping" id="live-ping">Ping: 24ms</div>
+            </div>
+        </div>
+        <iframe id="target-iframe" src="https://www.hgzy36.com/#/register?invitationCode=82133125242"></iframe>
+    </div>
+
+    <!-- SCAN HUD OVERLAY -->
+    <div id="scan-hud-overlay">
+        <div class="hud-circle-out"></div>
+        <div class="hud-circle-in"></div>
+        <div class="hud-target"></div>
+        <div class="radar-line"></div>
+    </div>
+
+    <!-- 🔔 TOP NOTIFICATION -->
+    <div id="topNotify"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const names = [
+                "Rahim Khan","Karim Uddin","Sabbir Ahmed","Tanvir Hasan","Nusrat Jahan",
+                "Mehedi Hasan","Jannatul Ferdous","Arif Hossain","Sadia Islam","Rakibul Hasan",
+                "Shakil Ahmed","Tanjina Akter","Imran Hossain","Farhan Rahman","Mim Akter",
+                "Rasel Mia","Sumaiya Rahman","Naim Islam","Jubayer Ahmed","Riya Khan",
+                "Hasibul Hasan","Anika Tabassum","Sohanur Rahman","Fahim Ahmed","Lamia Chowdhury",
+                "Rifat Hossain","Tahmina Akter","Sakib Hasan","Mahiya Mahi","Adnan Karim",
+                "Sharmin Sultana","Zubair Ahmed","Nafisa Islam","Saiful Islam","Tania Sultana",
+                "Mahmudul Hasan","Ayesha Siddika","Shuvo Roy","Priya Das","Omar Faruk",
+                "Jahid Hasan","Pinky Akter","Rony Ahmed","Nabila Noor","Shihab Khan",
+                "Rashed Mia","Liton Das","Sumi Akter","Arafat Hossain","Dilara Begum",
+                "ShadowX","DarkByte","CyberGhost","NullHunter","ZeroTrace",
+                "PhantomRoot","GhostInjector","ByteSniper","HexShadow","SilentOverride",
+                "DarkCipher","RootMaster","CyberKnight","ZeroDayX","PhantomCode",
+                "BitCrusher","NeonHacker","SilentExploit","GhostProtocol","DarkInjector",
+                "HexaRoot","BlackTerminal","CyberPhreak","ShadowCracker","ZeroByte",
+                "PhantomTrace","RootAccess","DarkShell","CyberVortex","SilentPacket",
+                "GhostByte","BlackHatX","NeonShadow","ZeroRoot","PhantomHack",
+                "DarkPulse","CyberStorm","SilentRoot","HexaByte","GhostCore",
+                "RootPhantom","DarkMatrix","CyberGhostX","SilentHack","ZeroProtocol",
+                "PhantomNode","BlackCipher","ShadowTerminal","NeonRoot","GhostAccess",
+                "AlphaGhost","OmegaRoot","NovaShadow","DeltaHack","EchoByte",
+                "QuantumX","PixelPhantom","VectorRoot","BinaryGhost","CryptoShadow",
+                "MatrixByte","SignalHack","NeuralRoot","DataPhantom","CoreShadow",
+                "SystemX","NetRunner","DeepTrace","CyberFlux","ByteWave",
+                "DarkNetX","ZeroSignal","PhantomAI","HackSphere","GhostLink"
+            ];
+
+            const delays = [5000, 10000, 15000, 30000]; 
+            const showTime = 4000; 
+            const random = arr => arr[Math.floor(Math.random() * arr.length)];
+
+            function showNotification() {
+                const box = document.getElementById("topNotify");
+                if (!box) return;
+
+                const name = random(names);
+                const amount = Math.floor(Math.random() * 150) + 20;
+
+                box.innerHTML = `
+                <div class="notify-box">
+                    <div class="dot"></div>
+                    <div class="text">
+                    <b>${name}</b> just won 
+                    <span class="amount">+${amount}u</span>
+                    </div>
+                </div>
+                `;
+
+                box.classList.add("show");
+
+                setTimeout(() => {
+                    box.classList.remove("show");
+                }, showTime);
+
+                setTimeout(showNotification, random(delays));
+            }
+
+            setTimeout(showNotification, 3000);
+        });
+    </script>
+
+    <style>
+        #topNotify {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translate(-50%, -120px);
+            z-index: 9999999;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        #topNotify.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .notify-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #020617, #001f2f);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 20px rgba(0,255,200,0.35);
+            border: 1px solid rgba(0,255,200,0.25);
+            font-size: 14px;
+            min-width: 260px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #00ffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ffcc;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {transform: scale(1); opacity:1;}
+            50% {transform: scale(1.6); opacity:0.6;}
+            100% {transform: scale(1); opacity:1;}
+        }
+
+        .text b {
+            color: #00ffcc;
+        }
+
+        .amount {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        @media (max-width:480px) {
+            .notify-box {
+                width: 90%;
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+        }
+    </style>
+
+    <!-- FLOATING LOGO BUTTON -->
+    <div id="ai-toggle-btn" onclick="openWidget()">
+        <img src="https://i.ibb.co.com/5P94D3P/Picsart-26-02-28-19-22-33-467.png" alt="WinX" class="floating-logo">
+    </div>
+
+    <!-- MAIN AI WIDGET -->
+    <div id="ai-scanner-widget">
+        <div class="ai-header" id="widget-header">
+            <span style="color:var(--primary);">❖ WinX PRO</span>
+            <div class="header-icons">
+                <span class="icon-btn" onclick="toggleCompact()">➖</span>
+                <span class="icon-btn" onclick="openPanel('dev-panel')">👨‍💻</span>
+                <span class="icon-btn" onclick="openPanel('analytics-panel'); updateAnalytics();">📊</span>
+                <span class="icon-btn" onclick="openPanel('settings-panel')">⚙️</span>
+                <span class="icon-btn" style="color:var(--red);" onclick="closeWidget()">❌</span>
+            </div>
+        </div>
+
+        <div class="ai-body" id="widget-body">
+            <div class="server-acc" id="server-accuracy">WinX Predictor Ultra AI </div>
+            <div class="session-timer" id="session-timer-box">⏳ EXPIRES IN: <span id="expire-time-text">01:00:00</span></div>
+            
+            <div class="mini-trend-bar"><div class="mt-b" id="trend-b" style="width:50%;"></div><div class="mt-s" id="trend-s" style="width:50%;"></div></div>
+            
+            <div class="analytics-row">
+                <div>W: <span id="stat-win" style="color:var(--green)">0</span></div>
+                <div>L: <span id="stat-loss" style="color:var(--red)">0</span></div>
+                <div style="color:var(--green);" id="stat-profit">Profit: +0u</div>
+            </div>
+
+            <div style="text-align:center; font-size:6px; color:#64748B; font-weight:700;" id="data-counter">LAST WIN HISTORY (0/10)</div>
+            <div class="extracted-data" id="extracted-data"></div>
+
+            <div class="dynamic-area">
+                <div id="input-section">
+                    <div class="input-row">
+                        <button class="btn-input" style="color:var(--orange);" onclick="addInput('B')">BIG (B)</button>
+                        <button class="btn-input" style="color:var(--primary);" onclick="addInput('S')">SML (S)</button>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn-scan disabled" id="btn-analyze" onclick="startScan()">RESEARCH PATTERN</button>
+                        <button class="btn-reset" onclick="resetData()">↻ RESET</button>
+                    </div>
+                </div>
+                <div id="tech-indicators"></div>
+                <div class="ai-result-box" id="ai-result-box">
+                    <div class="pred-color" id="pred-output">-</div>
+                    <div class="prob-container">
+                        <span style="color:var(--orange)">B <span id="prob-B-text">0%</span></span>
+                        <div class="prob-bar-bg"><div class="prob-b-fill" id="prob-B-fill"></div></div>
+                        <div class="prob-bar-bg"><div class="prob-s-fill" id="prob-S-fill"></div></div>
+                        <span style="color:var(--primary)"><span id="prob-S-text">0%</span> S</span>
+                    </div>
+                    <div class="result-actions" id="action-section">
+                        <button class="btn-action btn-win" onclick="handleResult('W')">WIN</button>
+                        <button class="btn-action btn-loss" onclick="handleResult('L')">LOSS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel" id="dev-panel">
+            <div class="panel-header"><span>👨‍💻 DEVELOPER</span><span class="icon-btn" onclick="closePanel('dev-panel')">❌</span></div>
+            <div class="dev-content">
+                <div class="dev-avatar-wrapper"><div class="dev-avatar-ring"></div><img src="https://i.ibb.co.com/n8B9pFsw/FB-IMG-1765459324738.jpg" alt="Developer" class="dev-avatar"></div>
+                <div class="dev-name">ABU RAIHAN</div><div class="dev-badge">System Developer Online</div>
+                <div class="dev-bio">[WinX 2.0.Team Owners] Expert in AI Algorithm design, pattern recognition, and professional web trading systems. Build your future with accurate data.</div>
+                <div class="dev-socials">
+                    <a href="https://t.me/+Gm-nPLSaYElkNzFl" target="_blank" class="contact-card cc-tele">
+                        <div class="cc-icon">✈️</div><div class="cc-text"><span class="cc-title">Telegram Channel</span><span class="cc-sub">Daily updates & signals</span></div>
+                    </a>
+                    <a href="https://wa.me/+8801787720693" target="_blank" class="contact-card cc-wa">
+                        <div class="cc-icon">💬</div><div class="cc-text"><span class="cc-title">Direct WhatsApp</span><span class="cc-sub">Quick support</span></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel" id="settings-panel">
+            <div class="panel-header"><span>⚙️ SETTINGS</span><span class="icon-btn" onclick="closePanel('settings-panel')">✖</span></div>
+            <div style="flex:1; padding-bottom: 5px; display: flex; flex-direction: column;">
+                <div class="setting-row">
+                    <label for="base-bet">Base Bet (Unit)</label>
+                    <input type="number" id="base-bet" class="setting-input" value="10" onchange="updateAnalytics()">
+                </div>
+                <div class="setting-row">
+                    <label for="target-profit">Target Profit (u)</label>
+                    <input type="number" id="target-profit" class="setting-input" value="100">
+                </div>
+                <div class="setting-row">
+                    <label for="stop-loss">Stop Loss (u)</label>
+                    <input type="number" id="stop-loss" class="setting-input" value="50">
+                </div>
+                <div class="setting-row">
+                    <label for="voice-toggle">Voice/Sound</label>
+                    <label class="setting-toggle">
+                        <input type="checkbox" id="voice-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button class="btn-logout" onclick="logoutSystem()">🔴  LOGOUT</button>
+            </div>
+        </div>
+
+        <div class="side-panel" id="analytics-panel">
+            <div class="panel-header"><span>📊 FUND & ANALYTICS</span><span class="icon-btn" onclick="closePanel('analytics-panel')">✖</span></div>
+            <div style="flex:1; overflow-y:auto; padding-bottom: 5px; scrollbar-width: thin; scrollbar-color: var(--primary) transparent;">
+                
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-title">AI ACCURACY</div>
+                        <div class="stat-card-val" id="an-accuracy">0.0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">TOTAL PLAYS</div>
+                        <div class="stat-card-val" id="an-plays" style="color:var(--orange);">0</div>
+                    </div>
+                    <div class="stat-card" style="grid-column: span 2;">
+                        <div class="stat-card-title">MAX LOSS STREAK (WARNING)</div>
+                        <div class="stat-card-val" id="an-max-streak" style="color:var(--red);">0</div>
+                    </div>
+                </div>
+
+                <div class="martingale-box">
+                    <div class="table-title">MARTINGALE FUND PLAN (7 STEPS)</div>
+                    <table class="m-table" id="martingale-table">
+                        <thead>
+                            <tr><th>STEP</th><th>BET AMOUNT</th><th>TOTAL COST</th></tr>
+                        </thead>
+                        <tbody id="m-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const coreAlgorithmData = "BSSSBBSBSSBBBSBSSBBSSBSSBBSBBBBSBBSBBSSBBBBBBSSBSSBSBBBSBBSSSBBSBBSBSSBBBSSBSBSBSSBSBBBBSSBSBBBSBSSBBSBSBBBBSSBSSBBSBBSBBBBSSSSSSSBBSSSBBBBSSBSBBSBBBSBBSBSSSBBBSSSBSSBSSBBBBSBBSSSSFFSSBBBBBBSSBSBSBSSBBBSBSBSSSBBSSBBBSBSBSBSBBBSBBSSSSBSSBBSBBSBBBSBBSBBBBSBSSSSSSBSBSBBBSBSBSBSBBBSBSBBSBSBSBBBSBSBSBBSSBBBSBBSSSSBSSBSBSBSBBBSSBSBBSSBSSBBSBSBSSBSBSSBSBSBBBSBBSBBBBBSSBBBSBBBSBBSBSBBSSBBSBBBBSSBSSBSSSBBBSBSBBSBBBSSSSBSSBSBSSBSSSBBBSSSBBSSSSBBBSBSBBSSSSBSSBSBBBSBBSBSBBSBBBSSBSBSBBSBBSBBBSBSBSBBSBBSBSBSSSBSBBSBSBSSBSSBBSBSBSBBBSBBBSBSBSSBSBSSBSBSSBSBSSBSBSSBSBSSBSBSSSSBBSBBSBSBBSSSSBBBSBBSSSSBSBSSSBBBBSSBSBSSBSSSBSBSSBSBBSSBSBSSBBBBSSBSBSSBSBSBSBBSSBSSBSBBBSBSBSBBBSSSSBSSBBSBBSSBSBSBSBSBBBSBBSBSBBSSBSBBSSSSSSBBBSBSSBBSBSBSBSBSBBSBBSBBSBSSBSBSSBSSSSSSBBSBSBBSSBBSBSBSSBBBSBBBSBBSSBBSBBSSBBBSBBBBBSBSBSBSBBSSBBSSSSSSBSSBBBSBSBSBBSBBBBSSBSBSSBSSBSBBBSBSSBSSBBBSBSBBBSBBBSBSBBBBBBSBSBBSBSSBBBSBBBSBBBSBBSBSBSBBSBSBSSBBBSBBSBBSBSBSSBBBSBSBBBBSSBSSBSSBSBSSSSSBSBBBBSSBSBSBBBSBSSBBBSBSSSBBSBBSBSBBSSBBBSBSBBSSSSSBSBBBSSBBBSBBSBBBSBBSBBBSBSBBBSBBSBBBSBBBBBSBBSSBBSBBSBBBBBBSSSSBBSSBSSBSBBBBBBBSBBBSBSBBSSBBSBSBBBSBBBBSSBSBSSBBSBSBSBSBSBBSBBSBBBSBBSBSBBSSBBBSBBSBBSBBSBBSSBSBBSBBBBSSBBBSBBSBBSBBSBSBBBBSSBBSSBBSSBSBBSBBBSBBBBSSBBSBSBBBSBSSBBBSBSSBBBSSBSBBSSBBSBSSBBBSBBSBBSBBSBSBSBBBBSSBSBSBBSBBSSBSBSSBSBSSBBBSBSBSBBBSBBBBBBBSBSBBSBSSBSBSBBSSBBSBSBBBSBSSBBSBBSSBSSBSBBSSBBSBBBSBSSBSSBSSBBBSSSSSBBBSBBSBBSSBSBSBSSBBBSBBSSSSSSSBBBBBBSBBBSBBBSBSSBSBBBBBSBSBBSSBSBBBBSSBSBBSBSBBBBBBBSBSSSBBBBBSSBSSBBSBSBBSBBBSBBBSBBSBSBSBBBSBSBBBBBSBBSBBBBSSBBSSBBBSBBBSBBSBSBBBSBBSSBBBSBBSSBSBSBSSBSSBSSBBBSBBSSSSBBSBBBBBSSBBSSBSBBSBBBSBSSBSBBSBBBSBSBBSSSSBBBBSSSSBSBBBSBBBBSSSSSSBSBBBSSBBSBBSBBBBSSBBBSBBBSBSBBBBBSBBBSBBSSBBSSBSBBSBBBBSBBSBSSBSBSBBBSBBBSBSBSSBBSBSBBSSBSBBBSBBSSBBBBSSBSBSBBSBSBBBBSSBBSSSSBSBSBBBSBBBSBBSBBBSBBSBBBSBBBSBBBBBSBBSBBSBSBBSSBBBBBBSSBBBSSBBSBBSBSBSSBBSBSSBSSBBBBBBSBBBSBSBSBBSSSSSBBSSBSBBSBSBSSBSSBBBSBBBSBSBBSBBBBSSBSSBSBBBSBBBSBSBSBBSSBSBBBSBSBBBBSSBBSBSSBBSSBBBBSSBSBSBSBSBSBBBBBSBBSBSBBSBBBBBBSSSSBSBSBBSBBSSBSBSBBSSBSBSBBBSBBSBBSBSBSSBBSBBSBBBSBBSBBBBBSSSSBBSBBSBBBBSBSSBBSBBBBSBBBSBSBSBBSBBSBSBBSBBSBBBBBBSBSSBSBSBSBBBBSBSSBSBBSBSBSBSBBSBSBSSBSSBSSBBBSBSBBSSSSBBSBBSBSSBSBSBSBBSBBBSBSBBSBSBSBSBBSSSBBSBBSBSSSBBSBSBSSBBSBBBBSSSSBBSSBBSBBBBSSBSBBBSBBBSBBSBSBBBBSSBSBSBBSSBSBSBSSBSSBSSBBSBBSBBBBSSSSBBSBSBBSBBSBSSBBSBSSBBBBBSSSBBBSBSSBSSBBBSBSSBSSBBBBSBBBSBSBSSBBSBSBBSBSSSBBSBBSBSSBSBBBSBSBBBSBSBBBSBBSBSBBBSBBSBBBSBBSBBBSBSBSBSSBSBSBSBSBBSBSBBSBBSBSBSSBBSBSSBBSSSSBSBBBSBSBSBBSBSBBSBSBBBBBBBSBBSSBBSBSBSSBSSBSSBSBBSBSBSBBBSBSSBBSBBSSSSBBBBBBSBSSBBSBBSSSBBSSBBSBBBSBBSBSSBBBBSBSBBBBBSBBBSBBSBSBSSBSBBSBBSBSSBSBSBSBBBSBBSBSBBSBSBBBSBBSSBBBBSSSSBBBSBSBBSBSBBBBSSBBSBSBBSSBBSBSSBSSBSSBBSSBBSBSBBBSBBSBSBBSBSBSBSSBSBSSBSBSBSBBSBSBBSSBBSBSBSBBSBSSBBBSBSBBSBBSBSBBSSBBSSBBBBSSSSBBSSBSBSBBSSBSBSBSBBSBSBBSSBBSBBBBBBBBBSBSBBBBBBBBBBBBSBBSBBBSBBBSBSSSBBBSSSBSSSBSBSBSSBSBSBBBSBBBBBBSSBSBSBSBBSSBSBSBSBSBBSBBSBBBSBSBBSBBSBSBSSBBSBBSBSSBSSBBBBBBSSBSSBSBSBBBSBBSBSSBSBBBSBSBBSBBSSBBSBBSBBSBBBSBSSBSBBBSBBSSBBSBBBBSSBSBSBBSBSBSBSBBBSBBSBSSBSBBSBSBBSSBBSBBSSBSBSBBBSBBSBSBSBSSBBSBSBBBBBSBBSBBBSBBSBSBBSBBBSBBSSBSBBSSBSBBSBSBBSSBSSBBBBSBSBBBSBSBSSBBSBBSSBBSBSSBSBSBSBSBBSSBBSBBSSBSBBSSBBSBBBBSSBSBSBSBSBBBSBSSBBSBSBSBSBSBBBSBBSBBBSBSBBBSBSBBBBBBBBSBBSBBSBSSBSSBSBSBSSBSBBSBSSSBBSSBSBSBSSBBSBSBSBSBBBSBBSSBSBBSBBSBSSBSBSBBBSBSBSBBBBBSBSBBSSBBSBSSBSBSBBSBSSBBSBSBBSSBSBSBSSBSSBSBSBBSBBBSBBBSBBSBBBSBSBSBBSBSSBSBBSBSSBBSBSBSBBBSBSBBBSBBSBBSBBBBSSBSBBSBSBBBSBSBSSBSBSBSSBBSBSBBSBBBSBSSBBSBSSBSBSBSBSBBBSBSBBSSBSBSBSBBSBSBBSBSSBBSSBSBBSBSBSBBBBSSBSBSBSSBBSBSBSBSSBBBBBSBBBSBBBSBBSBBBBBBSSBBBBSBBSBBBBSBSBBBBBBBSBBBSBBBBSSSSBBBSBBSBBBSBBBSBSBBSBBSBBBSBBSSBSSBBSBBSBSBSBBBSBSBBSSBBSBSBSBBBSBBSBSBSBBSBBSSBBSBBSSBSSBSSBSBBBSBSBSBSBSBBSBBSBBSBSSBSBBBSBBSSBBSBSBBSBSBSSBSBBSSBSBBSBBBSBBBBSSBBSBSBSBBSBSBBBSBBSBSBSBSBSBBSBSBSBSBSBBSBSBSBSSBSBSBBBBSSBSSBSSBSBSBBSBBBBBSBSBSBBSBSBSBBBBBSBBBBBBBSBBSBSBSBBBSBSSBSBBBSBBSSBBSBSBBSBBBBSSBSBBSBBSBSSBBSBSBBSBBSBBBBSSBBSBSBSSBBSSBSBSBSBBSBSBBSSBSSBBBSBSBSSBBSSBBBSBBSBSSBBSSBBBSBBSBSSBSSBSSBSSBSBSBBSSBBSBSBSBSBSBSBSBBSBBSBBSBBSBSSBBBBSSBBSBSBBSBBSBBSBBSBSSBBSBSBBSBBBBSSBSSBBBSBBBSBBBBSSBBSSBBBSBSBBBSBBSBBBSBSSBSSBBBSBSBSBSBBSBSBSBBSBSSBBSBBSBBSBBSBBBSBBBBBBBBBSBBSBSBBSBBSBBSSBSBSBBSBBSBBSBSBSBSSBBSBSBSBSBBBSBBBBBSBBSBBBBBBBSBBSBBSBBBBBBSBSBBSBBBBSSBSSBBSSBSBBBSBBSSBSBSBBSBSSBBSBSBSBBSBSBBBSBBSBBSBSBSSBBSBSSBSSBBBBBSBBSBSBBSBBSBBBSBSBSSBBBSBBSBBSSBSBBSBSBBSBBBSBBSBBSSBBSBSSBBBSBSBSBBSBBBSBSBBSBSBBSBBSSBBBSBSBSSBSBBSBSBBSBBSBBSBSBBSBSSBSBBSBSBBSBBS";
+
+        const winVoices = [ "অসাধারণ! প্রফিট লক করুন। ইমোশন কন্ট্রোলে রাখুন।", "সিস্টেম দারুণ কাজ করছে। মানি ম্যানেজমেন্ট ধরে রাখুন।", "টার্গেটের দিকে এগিয়ে যাচ্ছেন। ওভার ট্রেড করবেন না।", "গুড জব! এভাবেই নিয়ম মেনে ট্রেড করুন।", "দারুণ জয়! পরবর্তী সিগন্যালের জন্য অপেক্ষা করুন।", "সঠিক প্রেডিকশন! আপনি সঠিক পথেই আছেন।", "প্রফিট নিশ্চিত করা হয়েছে। মাথা ঠান্ডা রেখে খেলুন।", "উইন! এআই সিস্টেম একুরেট কাজ করছে।", "চমৎকার! আপনার ট্রেডিং স্ট্র্যাটেজি কাজ করছে।", "টার্গেট পূরণ হওয়ার পথে। ধৈর্য ধরে রাখুন।", "আরও একটি সফল ট্রেড। লোভ থেকে দূরে থাকুন।", "খুব ভালো এন্ট্রি ছিল। প্রফিট এনজয় করুন।", "সিস্টেম স্ক্যান সফল। আমরা জিতেছি।", "প্যাটার্ন ১০০% মিলে গেছে। অসাধারণ প্রফিট।", "ট্রেডিংয়ের নিয়ম মেনে চলার জন্য ধন্যবাদ।", "উইন এক্স ভিআইপি সিস্টেম আপনার বিশ্বস্ত সঙ্গী।", "বুলস আই! একেবারে নিখুঁত সিগন্যাল।", "আরেকটি উইন! আপনি একজন প্রো ট্রেডার।", "প্রফিট জমা হয়েছে। পরবর্তী প্যাটার্ন অ্যানালাইজ করুন।", "এআই ইঞ্জিন দারুণ পারফর্ম করছে। লেগে থাকুন।", "সফল ট্রেড। অতিরিক্ত রিস্ক নেওয়া থেকে বিরত থাকুন।", "মার্কেট এখন আমাদের পক্ষে। ফোকাস হারাবেন না।", "পারফেক্ট ম্যাচ! আমরা সঠিক ট্রেন্ড ধরেছি।", "ধৈর্যই সাফল্যের চাবিকাঠি। প্রফিট উপভোগ করুন।", "খুব সুন্দর! আজকের টার্গেট প্রায় কমপ্লিট।" ];
+        const lossVoices = [ "লস ট্রেডিংয়ের অংশ। পরবর্তী স্টেপে ফোকাস করুন।", "মার্কেট ডাইনামিক। ২ এক্স ফান্ড ব্যবহার করুন, ভয় পাবেন না।", "মাথা ঠান্ডা রাখুন। এআই পরবর্তী সঠিক প্যাটার্ন খুঁজছে।", "ইমোশনাল হবেন না, সিস্টেমের উপর ভরসা রাখুন।", "লস হয়েছে। মানি ম্যানেজমেন্ট অনুযায়ী পরের ট্রেড নিন।", "প্যানিক করবেন না। ফান্ড রিকভার করা সম্ভব।", "পরবর্তী সিগন্যাল শক্তিশালী হবে। অপেক্ষা করুন।", "মার্কেট একটু ভোলাটাইল। ধৈর্য ধারণ করুন।", "লস মেনে নেওয়াই প্রো ট্রেডারের লক্ষণ। এগিয়ে যান।", "সিস্টেম রি-ক্যালিব্রেট হচ্ছে। ফান্ড ডাবল করুন।", "এটি শুধুমাত্র একটি ধাপ। মূল ফোকাস টার্গেটে রাখুন।", "ইমোশন কন্ট্রোল করুন। আমরা লস রিকভার করবো।", "মার্টিঙ্গেল রুলস ফলো করুন। ঘাবড়ানোর কিছু নেই।", "লস হয়েছে, তবে গেম এখনো শেষ হয়নি।", "এআই ইঞ্জিন নতুন ডাটা স্ক্যান করছে। প্রস্তুত থাকুন।", "ফান্ড ব্যালেন্স চেক করুন এবং সঠিক অ্যামাউন্ট বসান।", "মার্কেট আমাদের ধোঁকা দিয়েছে, তবে এআই প্রস্তুত।", "অস্থির হবেন না। ট্রেডিংয়ে উত্থান পতন থাকবেই।", "লস রিকভারি প্রোটোকল চালু করা হচ্ছে।", "পরবর্তী ট্রেডে আমরা লস কভার করে প্রফিটে আসবো।", "ট্রেডিং ডিসিপ্লিন ভাঙবেন না। নিয়ম মেনে চলুন।", "সিস্টেম প্যাটার্ন রি-অ্যানালাইজ করছে। একটু সময় দিন।", "লস আপনার অভিজ্ঞতা বাড়ায়। ফোকাস ঠিক রাখুন।", "ভয় পাবেন না, আমাদের সিস্টেম অনেক শক্তিশালী।", "খুব সুন্দর! আজকের টার্গেট প্রায় কমপ্লিট।" ];
+
+        let state = { history: [], wins: 0, losses: 0, profit: 0, streak: 0, maxStreak: 0, totalBets: 0, currentPred: null };
+        let isCompact = false;
+        
+        let audioCtx;
+        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+        
+        let sessionInterval = null;
+        let sessionEndTime = null;
+        let generatedPassword = ''; // To store the generated password
+        let adminPassword = ''; // To store the generated admin password
+
+        // Add a variable to store the timer ID for YouTube watch time
+        let youtubeWatchTimer = null;
+
+        function playTone(freq, type, duration) {
+            try {
+                if(!document.getElementById('voice-toggle').checked) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if(!AudioContext) return; 
+                if(!audioCtx) audioCtx = new AudioContext();
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                
+                let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+                osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.warn("Audio Context blocked."); }
+        }
+
+        setInterval(() => { let ping = Math.floor(Math.random() * (45 - 15 + 1) + 15); document.getElementById('live-ping').innerText = `Ping: ${ping}ms`; }, 1500);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            let pct = 0; let bar = document.getElementById('splash-bar'); let pText = document.getElementById('splash-percent'); let sText = document.getElementById('splash-text');
+            let intv = setInterval(() => {
+                pct += Math.floor(Math.random() * 3) + 1; if(pct > 100) pct = 100;
+                pText.innerText = pct + "%"; bar.style.width = pct + '%';
+                if(pct === 100) { 
+                    clearInterval(intv); document.getElementById('loading-box').style.display = 'none';
+                    const wMsg = document.getElementById('welcome-msg'); wMsg.style.display = 'block';
+                    setTimeout(() => { 
+                        document.getElementById('splash-screen').style.opacity = '0'; 
+                        setTimeout(() => { 
+                            document.getElementById('splash-screen').style.display = 'none'; 
+                            updateAnalytics(); 
+                            // Check for YouTube return state after splash screen
+                            checkYouTubeReturnState(); // This is the crucial change for auto-login
+                        }, 800); 
+                    }, 1000);
+                }
+            }, 30); 
+
+            makeDraggable(document.getElementById("ai-toggle-btn"));
+            makeDraggable(document.getElementById("ai-scanner-widget"), document.getElementById("widget-header"));
+        });
+
+        // Add a visibility change listener for better browser compatibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                // When the app becomes visible again, check for YouTube return state
+                // This helps catch cases where the user switches back from YouTube
+                checkYouTubeReturnState();
+            }
+        });
+
+        function speak(text) { 
+            try {
+                if(!isChrome || !document.getElementById('voice-toggle').checked) return; 
+                if(!window.speechSynthesis) return;
+                
+                if(window.speechSynthesis.speaking) window.speechSynthesis.cancel(); 
+                let u = new SpeechSynthesisUtterance(text); u.lang = 'bn-BD'; u.rate = 1.0; u.pitch = 1.1; window.speechSynthesis.speak(u); 
+            } catch(e) { console.warn("Speech Synthesis blocked."); }
+        }
+
+        // New function to generate password based on device information
+        function generateDeviceBasedPassword() {
+            const userAgent = navigator.userAgent;
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const currentTime = Math.floor(Date.now() / (1000 * 60 * 60 * 12)); // Hourly unique key changed to 12-hourly for consistency
+
+            // Use a more robust hashing for different browsers
+            let hashInput = `${userAgent}${screenWidth}${screenHeight}${timeZone}${currentTime}`;
+            let hash = 0;
+            for (let i = 0; i < hashInput.length; i++) {
+                const char = hashInput.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            const base64Hash = btoa(String.fromCharCode(...new Uint8Array(new Uint32Array([hash]).buffer))).replace(/=/g, '').substring(0, 8);
+            generatedPassword = `WinX${base64Hash}`; // Storing for verification
+            console.log("Generated User Password:", generatedPassword); // Debugging
+            return generatedPassword;
+        }
+
+        function generateAdminPassword() {
+            const now = new Date();
+            // Get current hour in Bangladesh time, rounded to the nearest 12-hour block
+            const options = {
+                hour: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Dhaka' // Bangladesh Standard Time
+            };
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            const bangladeshHour = parseInt(formatter.format(now), 10);
+
+            // Determine the 12-hour block (e.g., 00-11 for first block, 12-23 for second)
+            const hourBlock = Math.floor(bangladeshHour / 12) * 12; // Will be 0 or 12
+
+            // To make the password unique per 12-hour block, use a representation of the block
+            const uniqueBlockKey = String(hourBlock).padStart(2, '0'); // "00" or "12"
+
+            // Get current minute in Bangladesh time
+            const minuteOptions = {
+                minute: '2-digit',
+                timeZone: 'Asia/Dhaka'
+            };
+            const minuteFormatter = new Intl.DateTimeFormat('en-US', minuteOptions);
+            const bangladeshMinute = minuteFormatter.format(now);
+
+            adminPassword = `WinX${uniqueBlockKey}${bangladeshMinute}20`; // Appending '20' as requested
+            console.log("Generated Admin Password (12hr):", adminPassword); // Debugging
+            return adminPassword;
+        }
+
+
+        function openPasswordInstructionModal() {
+            document.getElementById('password-instruction-modal').style.display = 'flex';
+            speak("পাসওয়ার্ড তৈরির নিয়মাবলী। শেয়ার করুন এবং ভিডিও দেখুন বাটনে ক্লিক করুন।");
+        }
+
+        function closePasswordInstructionModal() {
+            document.getElementById('password-instruction-modal').style.display = 'none';
+        }
+
+        function proceedToShareAndWatch() {
+            closePasswordInstructionModal(); // Close instruction modal
+            const youtubeLink = "https://youtu.be/J4oxM09bYIA?si=8A6TG0Cw2gYWpMfH"; // Official YouTube video link
+            const shareText = "আমি এই গানটি শুনেছি অনেক ভালো লাগছে গানটি শুনে আপনিও শুনতে পারেন একবার। আর যদি আপনার ও ভালো লাগে তাহলে এই ভিডিওটি শেয়ার করুন: ";
+            
+            // Store the state before navigating away
+            localStorage.setItem('awaitingYouTubeReturn', 'true');
+            localStorage.setItem('youtubeReturnTimestamp', Date.now());
+            console.log("Proceeding to share. Awaiting return set."); // Debugging
+
+            let openedWindow = null;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'WinX Predictor AI',
+                    text: shareText,
+                    url: youtubeLink
+                }).then(() => {
+                    console.log('Share successful (Web Share API)');
+                    // No need to open window if native share handles it, but still set a timer for return
+                }).catch((error) => {
+                    console.error('Share failed (Web Share API), falling back to window.open:', error);
+                    openedWindow = window.open(youtubeLink, '_blank', 'noopener,noreferrer');
+                });
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                console.log('Web Share API not supported, falling back to window.open');
+                openedWindow = window.open(youtubeLink, '_blank', 'noopener,noreferrer');
+            }
+            
+            // Start a timer to check if user returns after 30 seconds
+            // This timer will be cleared if the user returns successfully via checkYouTubeReturnState
+            if (youtubeWatchTimer) clearTimeout(youtubeWatchTimer); // Clear any previous timer
+            youtubeWatchTimer = setTimeout(() => {
+                if (localStorage.getItem('awaitingYouTubeReturn') === 'true') {
+                    console.log("YouTube watch timer expired without return or insufficient watch time."); // Debugging
+                    showCustomAlert("ভিডিও দেখা হয়নি", "ভিডিওটি কমপক্ষে ৩০ সেকেন্ড দেখা হয়নি অথবা ব্রাউজার সঠিকভাবে YouTube থেকে ফিরে আসেনি। অনুগ্রহ করে পুনরায় চেষ্টা করুন এবং নিশ্চিত করুন যে আপনি ৩০ সেকেন্ড ভিডিও দেখেছেন।");
+                    localStorage.removeItem('awaitingYouTubeReturn');
+                    localStorage.removeItem('youtubeReturnTimestamp');
+                }
+            }, 35000); // Give a 5-second grace period for navigation + 30 seconds watch time
+        }
+
+        function checkYouTubeReturnState() {
+            console.log("checkYouTubeReturnState called."); // Debugging
+            const storedPassword = localStorage.getItem('generatedWinXPassword');
+            const storedSessionEndTime = localStorage.getItem('winXSessionEndTime');
+
+            // --- FIRST: Check for an existing valid user session for auto-login ---
+            if (storedPassword && storedSessionEndTime && Date.now() < parseInt(storedSessionEndTime, 10)) {
+                generatedPassword = storedPassword; // Restore generated password
+                sessionEndTime = parseInt(storedSessionEndTime, 10);
+                document.getElementById('pass-input').value = generatedPassword;
+                document.getElementById('password-display-area').style.display = 'flex';
+                document.getElementById('generated-password').innerText = generatedPassword;
+                console.log("Active session found from localStorage, attempting auto-login."); // Debugging
+                verifyPin(); // Attempt to verify and log in
+                return; // Exit as session is active
+            }
+
+            // --- SECOND: If no active session, check for YouTube return to generate new password ---
+            if (localStorage.getItem('awaitingYouTubeReturn') === 'true') {
+                const timestamp = parseInt(localStorage.getItem('youtubeReturnTimestamp'), 10);
+                const currentTime = Date.now();
+                const timeElapsed = currentTime - timestamp;
+                console.log("Awaiting YouTube return. Time elapsed:", timeElapsed, "ms"); // Debugging
+
+                if (timeElapsed >= 30000) { // Check if at least 30 seconds passed
+                    if (youtubeWatchTimer) clearTimeout(youtubeWatchTimer); // Clear the error timer
+                    showGeneratedPassword(); // This will also update generatedPassword and localStorage
+                    localStorage.removeItem('awaitingYouTubeReturn');
+                    localStorage.removeItem('youtubeReturnTimestamp');
+                    
+                    console.log("30+ seconds passed, generating password and attempting auto-login."); // Debugging
+                    speak("আপনার পাসওয়ার্ড তৈরি হয়েছে। আপনি এখন লগইন করতে পারেন।");
+                    // Auto-login after generating password
+                    document.getElementById('pass-input').value = generatedPassword;
+                    verifyPin(); 
+                } else {
+                    if (youtubeWatchTimer) clearTimeout(youtubeWatchTimer); // Clear the error timer
+                    console.log("Less than 30 seconds passed. Showing alert."); // Debugging
+                    showCustomAlert("কম সময় দেখা হয়েছে", `ভিডিওটি কমপক্ষে ৩০ সেকেন্ড দেখা হয়নি। (${Math.floor(timeElapsed / 1000)} সেকেন্ড দেখা হয়েছে) অনুগ্রহ করে পুনরায় চেষ্টা করুন এবং নিশ্চিত করুন যে আপনি ৩০ সেকেন্ড ভিডিও দেখেছেন।`);
+                    localStorage.removeItem('awaitingYouTubeReturn');
+                    localStorage.removeItem('youtubeReturnTimestamp');
+                }
+            } else {
+                console.log("Not awaiting YouTube return or no active session."); // Debugging
+            }
+        }
+
+
+        function showGeneratedPassword() {
+            generatedPassword = generateDeviceBasedPassword(); // Ensure generatedPassword is updated
+            document.getElementById('generated-password').innerText = generatedPassword;
+            document.getElementById('password-display-area').style.display = 'flex';
+            document.getElementById('pass-input').value = generatedPassword; // Auto-fill the generated password
+            localStorage.setItem('generatedWinXPassword', generatedPassword); // Store the generated password
+            playTone(800, 'sine', 0.2);
+            showCustomAlert("পাসওয়ার্ড তৈরি হয়েছে", "আপনার নতুন পাসওয়ার্ড তৈরি হয়েছে! এটি কপি করে লগইন করুন।");
+            speak("আপনার নতুন পাসওয়ার্ড তৈরি হয়েছে। এটি কপি করে লগইন করুন।");
+        }
+
+        function copyGeneratedPassword() {
+            const passwordField = document.getElementById('generated-password');
+            const password = passwordField.innerText;
+            navigator.clipboard.writeText(password).then(() => {
+                const notify = document.getElementById('topNotify');
+                if(notify) { notify.innerHTML = `<div class="notify-box"><div class="dot" style="background:var(--primary);"></div><b>Password Copied!</b></div>`; notify.classList.add('show'); setTimeout(() => notify.classList.remove('show'), 3000); }
+                playTone(800, 'sine', 0.2);
+                speak("পাসওয়ার্ড কপি করা হয়েছে।");
+            }).catch(err => {
+                console.error('Failed to copy password: ', err);
+                showCustomAlert("কপি ব্যর্থ", "পাসওয়ার্ড কপি করা যায়নি। ম্যানুয়ালি কপি করুন।");
+                speak("পাসওয়ার্ড কপি করা যায়নি।");
+            });
+        }
+
+
+        function startSessionTimer() {
+            // Check if generatedPassword exists or if the entered password matches adminPassword
+            const enteredPin = document.getElementById('pass-input').value.trim();
+            const currentAdminPass = generateAdminPassword();
+
+            if (!generatedPassword && enteredPin !== currentAdminPass) {
+                showCustomAlert("SESSION ERROR", "No valid password generated or entered. Please generate a password or enter the admin password.");
+                logoutSystem(); // Force logout if no valid password is set
+                return;
+            }
+
+            // If it's an admin login, set 12-hour session. Otherwise, default 1 hour.
+            if (enteredPin === currentAdminPass) {
+                sessionEndTime = Date.now() + (12 * 60 * 60 * 1000); // 12-hour session for admin
+                console.log("Admin session started for 12 hours.");
+            } else {
+                sessionEndTime = Date.now() + (1 * 60 * 60 * 1000); // 1-hour session for regular user
+                console.log("User session started for 1 hour.");
+            }
+            
+            localStorage.setItem('winXSessionEndTime', sessionEndTime); // Store session end time
+            if(sessionInterval) clearInterval(sessionInterval);
+            sessionInterval = setInterval(updateSessionTimer, 1000);
+            updateSessionTimer();
+        }
+
+        function updateSessionTimer() {
+            if(!sessionEndTime) return;
+            let now = Date.now(); let diff = sessionEndTime - now;
+
+            if (diff <= 0) {
+                clearInterval(sessionInterval); document.getElementById('expire-time-text').innerText = "EXPIRED";
+                showCustomAlert("SESSION EXPIRED", "আপনার সেশন শেষ হয়েছে। অনুগ্রহ করে আবার YouTube শেয়ার করে নতুন পাসওয়ার্ড নিন এবং লগইন করুন।");
+                logoutSystem(); return;
+            }
+
+            let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            let s = Math.floor((diff % (1000 * 60)) / 1000);
+
+            h = h.toString().padStart(2, '0'); m = m.toString().padStart(2, '0'); s = s.toString().padStart(2, '0');
+            document.getElementById('expire-time-text').innerText = `${h}:${m}:${s}`;
+            
+            if(diff < 5 * 60 * 1000) { document.getElementById('session-timer-box').classList.add('expiring-soon'); } 
+            else { document.getElementById('session-timer-box').classList.remove('expiring-soon'); }
+        }
+
+        function showCustomAlert(title, message) {
+            document.getElementById('alert-title-text').innerText = title || "ERROR";
+            document.getElementById('alert-msg-text').innerText = message || "Something went wrong.";
+            document.getElementById('custom-alert-modal').style.display = 'flex';
+            playTone(300, 'sawtooth', 0.3);
+        }
+
+        function closeAlert() { document.getElementById('custom-alert-modal').style.display = 'none'; }
+
+        function verifyPin() {
+            let enteredPin = document.getElementById('pass-input').value.trim();
+            let currentAdminPassword = generateAdminPassword(); // Generate admin password for current time
+
+            if (enteredPin === generatedPassword || enteredPin === currentAdminPassword) {
+                document.getElementById('auth-screen').style.opacity = '0';
+                setTimeout(() => { 
+                    document.getElementById('auth-screen').style.display = 'none'; 
+                    document.getElementById('disclaimer-modal').style.display = 'flex'; 
+                    startSessionTimer(); 
+                }, 500);
+            } else { 
+                showCustomAlert("ACCESS DENIED", "ভুল লাইসেন্স কী (VIP License Key)। অনুগ্রহ করে সঠিক পাসওয়ার্ড প্রবেশ করান অথবা নতুন পাসওয়ার্ড তৈরি করুন।"); 
+                document.getElementById('pass-input').value = '';
+            }
+        }
+        
+        function acceptDisclaimer() { 
+            document.getElementById('disclaimer-modal').style.display = 'none'; 
+            document.getElementById('ai-toggle-btn').style.display = 'flex'; 
+            speak("Welcome WinX VIP."); 
+            startFakeNotifications(); 
+        }
+        function openWidget() { 
+            document.getElementById("ai-toggle-btn").style.display="none"; 
+            document.getElementById("ai-scanner-widget").style.display="flex"; 
+            // Ensure settings are loaded when widget opens
+            document.getElementById('base-bet').value = localStorage.getItem('baseBet') || '10';
+            document.getElementById('target-profit').value = localStorage.getItem('targetProfit') || '100';
+            document.getElementById('stop-loss').value = localStorage.getItem('stopLoss') || '50';
+            document.getElementById('voice-toggle').checked = (localStorage.getItem('voiceToggle') === 'true' || localStorage.getItem('voiceToggle') === null);
+        }
+        function closeWidget() { 
+            document.getElementById("ai-scanner-widget").style.display="none"; 
+            document.getElementById("ai-toggle-btn").style.display="flex"; 
+        }
+        function toggleCompact() { 
+            isCompact = !isCompact; 
+            document.getElementById('ai-scanner-widget').classList.toggle('compact-mode'); 
+            // Save state
+            localStorage.setItem('isCompact', isCompact);
+        }
+        function openPanel(id) { 
+            document.getElementById(id).style.display = 'flex'; 
+        }
+        function closePanel(id) { 
+            document.getElementById(id).style.display = 'none'; 
+        }
+
+        function makeDraggable(el, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; const dragHandle = handle || el;
+            dragHandle.onmousedown = dragStart; dragHandle.ontouchstart = dragStart;
+            function dragStart(e) {
+                e = e || window.event;
+                e.preventDefault(); // Prevent default touch behavior (scrolling)
+                if (e.type === 'touchstart') { pos3 = e.touches[0].clientX; pos4 = e.touches[0].clientY; } else { pos3 = e.clientX; pos4 = e.clientY; }
+                document.onmouseup = dragEnd; document.onmousemove = dragMove; document.ontouchend = dragEnd; document.ontouchmove = dragMove;
+            }
+            function dragMove(e) {
+                e = e || window.event;
+                e.preventDefault(); // Prevent default touch behavior (scrolling)
+                let clientX, clientY;
+                if (e.type === 'touchmove') { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
+                pos1 = pos3 - clientX; pos2 = pos4 - clientY; pos3 = clientX; pos4 = clientY;
+                let top = el.offsetTop - pos2; let left = el.offsetLeft - pos1;
+                const minLeft = 0; const minTop = 0; const maxLeft = window.innerWidth - el.offsetWidth; const maxTop = window.innerHeight - el.offsetHeight;
+                if (left < minLeft) left = minLeft; if (top < minTop) top = minTop; if (left > maxLeft) left = maxLeft; if (top > maxTop) top = maxTop;
+                el.style.top = top + "px"; el.style.left = left + "px"; el.style.bottom = "auto"; el.style.right = "auto";
+            }
+            function dragEnd() { document.onmouseup = null; document.onmousemove = null; document.ontouchend = null; document.ontouchmove = null; }
+        }
+
+        // ========================================================
+        // 🚀 NEW DEEP PATTERN MATCHING ALGORITHM
+        // ========================================================
+        function calculateAlgorithmPrediction() {
+            const inputStr = state.history.join(''); 
+            let bScore = 0; 
+            let sScore = 0;
+            let maxMatchLength = 0;
+
+            // 1. Deep Match: Try to find the longest exact suffix match (from 10 down to 3)
+            for (let len = inputStr.length; len >= 3; len--) {
+                let searchPattern = inputStr.substring(inputStr.length - len);
+                let bCount = 0; 
+                let sCount = 0;
+                let matchFound = false;
+                
+                let index = coreAlgorithmData.indexOf(searchPattern);
+                while (index !== -1 && index < coreAlgorithmData.length - len) {
+                    let nextChar = coreAlgorithmData.charAt(index + len);
+                    if (nextChar === 'B') bCount++; 
+                    else if (nextChar === 'S') sCount++;
+                    matchFound = true;
+                    index = coreAlgorithmData.indexOf(searchPattern, index + 1);
+                }
+
+                if (matchFound) {
+                    if (maxMatchLength === 0) maxMatchLength = len; // Record the longest match
+                    let weight = Math.pow(10, len - 2); // Huge weight for longer matches
+                    bScore += bCount * weight;
+                    sScore += sCount * weight;
+                }
+            }
+
+            // 2. Micro-Trend and Reversion Analysis
+            let last4 = inputStr.slice(-4);
+            if(last4 === "BBBB") sScore += bScore * 0.5; // Break the streak
+            if(last4 === "SSSS") bScore += sScore * 0.5; // Break the streak
+            if(last4 === "BSBS" || last4 === "SBSB") {
+                if(inputStr.slice(-1) === 'S') bScore += sScore * 0.3;
+                if(inputStr.slice(-1) === 'B') sScore += bScore * 0.3;
+            }
+
+            let result = bScore >= sScore ? 'B' : 'S';
+            
+            // 3. Dynamic Confidence based on Match Depth
+            let probability = 50;
+            if (maxMatchLength >= 8) {
+                probability = Math.floor(Math.random() * (99 - 95 + 1)) + 95; // 95-99%
+            } else if (maxMatchLength >= 5) {
+                probability = Math.floor(Math.random() * (94 - 88 + 1)) + 88; // 88-94%
+            } else {
+                probability = Math.floor(Math.random() * (87 - 80 + 1)) + 80; // 80-87%
+            }
+
+            return { result, probability };
+        }
+
+        // ========================================================
+        // 🚀 UPDATED SCAN UI FOR DEEP RESEARCH
+        // ========================================================
+        function startScan() {
+            if(state.history.length < 10) return;
+            document.getElementById('input-section').style.display = 'none'; 
+            document.getElementById('scan-hud-overlay').style.display = 'flex'; 
+            let term = document.getElementById('tech-indicators'); term.style.display = 'flex';
+            
+            speak("১০টি ডেটা স্ক্যান করা হচ্ছে। কোর ডেটাবেস থেকে সর্বোচ্চ নির্ভুল প্যাটার্ন খোঁজা হচ্ছে।");
+            
+            let ticks = 0;
+            let scanInt = setInterval(() => {
+                ticks++;
+                if (ticks < 10) {
+                    term.innerHTML = `> INGESTING 10-BLOCK DATA...<br>> [${state.history.join('')}]`;
+                }
+                else if (ticks < 20) {
+                    term.innerHTML = `> CROSS-REFERENCING CORE DATABASE...<br>> MATCHING DEEP PATTERNS... ${ticks*3}%`;
+                }
+                else if (ticks < 30) {
+                    term.innerHTML = `> ANALYZING PROBABILITY MATRIX...<br>> EXTRACTING HIGHEST ACCURACY...`;
+                }
+                else {
+                    term.innerHTML = `> MAXIMUM RESEARCH COMPLETE!<br>> CONFIDENCE: SECURED.`;
+                }
+                
+                if(ticks > 35) { // Slightly longer scan time
+                    clearInterval(scanInt); 
+                    document.getElementById('scan-hud-overlay').style.display = 'none'; 
+                    term.style.display = 'none'; 
+                    showPrediction(); 
+                }
+            }, 100);
+        }
+
+        function showPrediction() {
+            let aiData = calculateAlgorithmPrediction(); state.currentPred = aiData.result;
+            
+            document.getElementById('pred-output').innerText = aiData.result === 'B' ? 'BIG' : 'SMALL';
+            document.getElementById('pred-output').className = 'pred-color pred-' + aiData.result;
+            let pB = aiData.result === 'B' ? aiData.probability : 100 - aiData.probability; let pS = 100 - pB;
+            document.getElementById('prob-B-text').innerText = pB + '%'; document.getElementById('prob-B-fill').style.width = pB + '%';
+            document.getElementById('prob-S-text').innerText = pS + '%'; document.getElementById('prob-S-fill').style.width = pS + '%';
+            
+            document.getElementById('ai-result-box').style.display = 'flex'; 
+            speak(`সিগন্যাল ${aiData.result === 'B' ? 'বিগ' : 'স্মল'}। একুরেসি ${aiData.probability} পার্সেন্ট।`);
+        }
+
+        function addInput(v) { state.history.push(v); if(state.history.length > 10) state.history.shift(); updateUI(); }
+        function resetData() { 
+            state.history = []; 
+            state.wins = 0;
+            state.losses = 0;
+            state.profit = 0;
+            state.streak = 0;
+            state.maxStreak = 0;
+            state.totalBets = 0;
+            updateUI(); 
+            document.getElementById('ai-result-box').style.display = 'none'; 
+            document.getElementById('input-section').style.display = 'flex'; 
+        }
+
+        function handleResult(out) {
+            let base = parseInt(document.getElementById('base-bet').value); 
+            let currBet = base * Math.pow(2, state.streak);
+            let actualOutcome = out === 'W' ? state.currentPred : (state.currentPred === 'B' ? 'S' : 'B');
+            state.totalBets++; 
+            if(out === 'W') { state.wins++; state.profit += currBet; state.streak = 0; } 
+            else { state.losses++; state.profit -= currBet; state.streak++; if(state.streak > state.maxStreak) state.maxStreak = state.streak; }
+            addInput(actualOutcome);
+            document.getElementById('ai-result-box').style.display = 'none'; 
+            document.getElementById('input-section').style.display = 'flex'; 
+            updateUI();
+            if(out === 'W') speak(winVoices[Math.floor(Math.random()*winVoices.length)]); 
+            else speak(lossVoices[Math.floor(Math.random()*lossVoices.length)]);
+
+            // Check for target profit or stop loss
+            let targetProfit = parseInt(document.getElementById('target-profit').value);
+            let stopLoss = parseInt(document.getElementById('stop-loss').value);
+
+            if (state.profit >= targetProfit) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                showCustomAlert("টার্গেট পূর্ণ!", `অসাধারণ! আপনার টার্গেট প্রফিট +${targetProfit}u পূর্ণ হয়েছে। আজকের জন্য ট্রেড বন্ধ করুন।`);
+                speak(`অসাধারণ! আপনার টার্গেট প্রফিট ${targetProfit} ইউনিট পূর্ণ হয়েছে। আজকের জন্য ট্রেড বন্ধ করুন।`);
+                // Optionally reset state or disable trading
+                // resetData();
+            } else if (state.profit <= -stopLoss) {
+                showCustomAlert("স্টপ লস হিট!", `দুঃখিত! আপনার স্টপ লস -${stopLoss}u হিট করেছে। আজকের জন্য ট্রেড বন্ধ করুন।`);
+                speak(`দুঃখিত! আপনার স্টপ লস ${stopLoss} ইউনিট হিট করেছে। আজকের জন্য ট্রেড বন্ধ করুন।`);
+                // Optionally reset state or disable trading
+                // resetData();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('stat-win').innerText = state.wins; 
+            document.getElementById('stat-loss').innerText = state.losses;
+            document.getElementById('stat-profit').innerText = `Profit: ${state.profit}u`;
+            document.getElementById('data-counter').innerText = `AWAITING DATA (${state.history.length}/10)`;
+            let box = document.getElementById('extracted-data'); box.innerHTML = '';
+            state.history.forEach(c => { box.innerHTML += `<div class="history-dot dot-${c}">${c}</div>`; });
+            let btn = document.getElementById('btn-analyze');
+            if(state.history.length === 10) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+            updateAnalytics();
+
+            // Update trend bar based on recent history
+            let bCount = state.history.filter(c => c === 'B').length;
+            let sCount = state.history.filter(c => c === 'S').length;
+            let totalHistory = state.history.length;
+            
+            if (totalHistory > 0) {
+                document.getElementById('trend-b').style.width = (bCount / totalHistory * 100) + '%';
+                document.getElementById('trend-s').style.width = (sCount / totalHistory * 100) + '%';
+            } else {
+                document.getElementById('trend-b').style.width = '50%';
+                document.getElementById('trend-s').style.width = '50%';
+            }
+        }
+
+        function updateAnalytics() {
+            let total = state.wins + state.losses; let accuracy = total > 0 ? ((state.wins / total) * 100).toFixed(1) : "0.0";
+            document.getElementById('an-accuracy').innerText = accuracy + '%';
+            document.getElementById('an-plays').innerText = state.totalBets;
+            document.getElementById('an-max-streak').innerText = state.maxStreak;
+            let baseBet = parseInt(document.getElementById('base-bet').value) || 10;
+            let tbody = document.getElementById('m-table-body'); tbody.innerHTML = '';
+            let cumulative = 0;
+            for(let i=0; i<7; i++) { 
+                let currentBet = baseBet * Math.pow(2, i); 
+                cumulative += currentBet; 
+                tbody.innerHTML += `<tr><td>Level ${i+1}</td><td>${currentBet}u</td><td>${cumulative}u</td></tr>`; 
+            }
+
+            // Save settings to localStorage
+            localStorage.setItem('baseBet', document.getElementById('base-bet').value);
+            localStorage.setItem('targetProfit', document.getElementById('target-profit').value);
+            localStorage.setItem('stopLoss', document.getElementById('stop-loss').value);
+            localStorage.setItem('voiceToggle', document.getElementById('voice-toggle').checked);
+        }
+
+        function startFakeNotifications() { 
+            // Check if notification HTML is present, if not, create it
+            if (!document.getElementById('fake-notification-box')) {
+                const notifyBox = document.createElement('div');
+                notifyBox.id = 'fake-notification-box';
+                notifyBox.innerHTML = `
+                    <div class="notify-dot"></div>
+                    <span class="notify-text"></span>
+                `;
+                document.body.appendChild(notifyBox);
+
+                // Add CSS for the fake notification box
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    #fake-notification-box {
+                        position: fixed;
+                        top: 60px;
+                        right: -200px; /* Initially hidden */
+                        width: 180px;
+                        background: rgba(0,0,0,0.85);
+                        backdrop-filter: blur(5px);
+                        border-left: 3px solid var(--primary);
+                        color: #fff;
+                        padding: 8px 10px;
+                        font-size: 9px;
+                        border-radius: 4px;
+                        z-index: 999999;
+                        transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    .notify-dot {
+                        width: 6px;
+                        height: 6px;
+                        background: var(--green);
+                        border-radius: 50%;
+                        box-shadow: 0 0 8px var(--green);
+                        animation: softPulse 1.5s infinite;
+                    }
+                    .notify-text {
+                        color: #CBD5E1;
+                    }
+                    .notify-text b {
+                        color: var(--primary);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            const names = ["Sultan", "Rana", "Akash", "Bithi", "Faruk"];
+            const actions = ["logged in", "earned 50u", "scanned pattern", "got a signal"];
+
+            setInterval(() => { 
+                let note = document.getElementById('fake-notification-box'); 
+                if(note) { 
+                    const randomName = names[Math.floor(Math.random() * names.length)];
+                    const randomAction = actions[Math.floor(Math.random() * actions.length)];
+                    note.querySelector('.notify-text').innerHTML = `<b>${randomName}</b> just ${randomAction}.`;
+                    note.style.right = '10px'; 
+                    setTimeout(() => note.style.right = '-200px', 3000); 
+                } 
+            }, 10000 + Math.random() * 5000); // Between 10-15 seconds
+        }
+
+        function copyAdminUser() {
+            const user = document.getElementById('admin-tele-user').innerText; const el = document.createElement('textarea');
+            el.value = user; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            const notify = document.getElementById('topNotify');
+            if(notify) { notify.innerHTML = `<div class="notify-box"><div class="dot" style="background:var(--primary);"></div><b>ID Copied Successfully!</b></div>`; notify.classList.add('show'); setTimeout(() => notify.classList.remove('show'), 3000); }
+            playTone(800, 'sine', 0.2);
+        }
+
+        function logoutSystem() {
+            if(sessionInterval) clearInterval(sessionInterval); 
+            sessionEndTime = null;
+            localStorage.removeItem('generatedWinXPassword'); // Clear stored password
+            localStorage.removeItem('winXSessionEndTime');   // Clear stored session end time
+            localStorage.removeItem('awaitingYouTubeReturn'); // Clear YouTube state
+            localStorage.removeItem('youtubeReturnTimestamp'); // Clear YouTube timestamp
+            localStorage.removeItem('isCompact'); // Clear widget compact state
+
+            document.getElementById('ai-scanner-widget').style.display = 'none'; 
+            document.getElementById('ai-toggle-btn').style.display = 'none';
+            document.getElementById('disclaimer-modal').style.display = 'none'; 
+            document.getElementById('settings-panel').style.display = 'none';
+            document.getElementById('analytics-panel').style.display = 'none';
+            const auth = document.getElementById('auth-screen'); 
+            auth.style.display = 'flex'; 
+            auth.style.opacity = '1';
+            document.getElementById('pass-input').value = '';
+            document.getElementById('password-display-area').style.display = 'none'; // Hide password display
+            generatedPassword = ''; // Clear generated password in memory
+            adminPassword = ''; // Clear admin password in memory
+            if(window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            speak("সিস্টেম থেকে লগআউট করা হয়েছে।");
+        }
+    </script>
+</body>
+</html>
